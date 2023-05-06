@@ -1,61 +1,64 @@
 using UnityEngine;
 
-public class BallMovement : MonoBehaviour {
+public class BallMovement : MonoBehaviour
+{
     [SerializeField] private float shotPower;
     [SerializeField] private float stopVelocity = .05f; //The velocity below which the rigidbody will be considered as stopped
 
-	//[SerializeField] private LineRenderer lineRenderer;
+    [SerializeField] private LineRenderer lineRenderer;
 
     private bool isIdle;
     private bool isAiming;
 
     private Rigidbody rigidbody;
+    private Vector3? worldPoint;
 
-    private void Awake() {
+    private void Awake()
+    {
         rigidbody = GetComponent<Rigidbody>();
 
         isAiming = false;
-        //lineRenderer.enabled = false;
+        lineRenderer.enabled = false;
     }
 
-    private void FixedUpdate() {
-        if(rigidbody.velocity.magnitude < stopVelocity) {
+    private void FixedUpdate()
+    {
+        if (rigidbody.velocity.magnitude < stopVelocity)
+        {
             Stop();
         }
 
-        ProcessAim();
+        worldPoint = -CastMouseClickRay();
+
+        if (isAiming && isIdle && worldPoint.HasValue)
+        {
+            DrawLine(worldPoint.Value);
+        }
     }
 
-    private void OnMouseDown() {
-       
-        if (isIdle) {
+    private void OnMouseDown()
+    {
+        if (isIdle)
+        {
             isAiming = true;
         }
 
     }
 
-    private void ProcessAim() {
-        if(!isAiming || !isIdle) {
+    private void OnMouseUp()
+    {
+        if (!isAiming || !isIdle || !worldPoint.HasValue)
+        {
             return;
         }
 
-        Vector3? worldPoint = -CastMouseClickRay();
-
-        if (!worldPoint.HasValue) {
-            return;
-        }
-
-        DrawLine(worldPoint.Value);
-
-        if (Input.GetMouseButtonUp(0)) {
-            Shoot(worldPoint.Value);
-        }
+        Shoot(worldPoint.Value);
     }
 
-    private void Shoot(Vector3 worldPoint) {
-        Debug.Log("among");
+    private void Shoot(Vector3 worldPoint)
+    {
         isAiming = false;
-        //lineRenderer.enabled = false;
+        lineRenderer.enabled = false;
 
         Vector3 horizontalWorldPoint = new Vector3(worldPoint.x, transform.position.y, worldPoint.z);
 
@@ -66,21 +69,22 @@ public class BallMovement : MonoBehaviour {
         isIdle = false;
     }
 
-    private void DrawLine(Vector3 worldPoint) {
-        Vector3[] positions = {
-            transform.position,
-            worldPoint};
-        //lineRenderer.SetPositions(positions);
-        //lineRenderer.enabled = true;
+    private void DrawLine(Vector3 worldPoint) 
+     {
+        Vector3[] positions = {transform.position,worldPoint};
+        lineRenderer.SetPositions(positions);
+        lineRenderer.enabled = true;
     }
 
-    private void Stop() {
+    private void Stop()
+    {
         rigidbody.velocity = Vector3.zero;
         rigidbody.angularVelocity = Vector3.zero;
         isIdle = true;
     }
 
-    private Vector3? CastMouseClickRay() {
+    private Vector3? CastMouseClickRay()
+    {
         Vector3 screenMousePosFar = new Vector3(
             Input.mousePosition.x,
             Input.mousePosition.y,
@@ -92,10 +96,14 @@ public class BallMovement : MonoBehaviour {
         Vector3 worldMousePosFar = Camera.main.ScreenToWorldPoint(screenMousePosFar);
         Vector3 worldMousePosNear = Camera.main.ScreenToWorldPoint(screenMousePosNear);
         RaycastHit hit;
-        if (Physics.Raycast(worldMousePosNear, worldMousePosFar - worldMousePosNear, out hit, float.PositiveInfinity)) {
+        if (Physics.Raycast(worldMousePosNear, worldMousePosFar - worldMousePosNear, out hit, float.PositiveInfinity))
+        {
             return hit.point;
-        } else {
+        }
+        else
+        {
             return null;
         }
     }
 }
+
